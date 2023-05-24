@@ -1,29 +1,11 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { AxiosResponse } from 'axios';
-import { Observable, forkJoin, lastValueFrom, map } from 'rxjs';
+import { CompanyFetcherService } from './company-fetcher.service';
 import { Company, CompanyNode } from './interfaces/company.interface';
 import { Travel } from './interfaces/travel.interface';
 
 @Injectable()
 export class CompanyService {
-  constructor(private readonly httpService: HttpService) {}
-
-  fetchAllCompany(): Observable<Company[]> {
-    return this.httpService.get('/companies').pipe(map((data) => data.data));
-  }
-  fetchAllTravel(): Observable<Travel[]> {
-    return this.httpService.get('/travels').pipe(map((data) => data.data));
-  }
-
-  fetchData() {
-    return lastValueFrom(
-      forkJoin({
-        companies: this.fetchAllCompany(),
-        travels: this.fetchAllTravel(),
-      }),
-    );
-  }
+  constructor(private companyFetcherService: CompanyFetcherService) {}
 
   findCompanyById(companies: Company[], id: string) {
     return companies.find((company) => company.id === id);
@@ -33,8 +15,8 @@ export class CompanyService {
     return companies.filter((company) => company.parentId === parentId);
   }
 
-  async getCompanyTravelCostByCompanyId(companyId: string) {
-    const { companies, travels } = await this.fetchData();
+  async getTravelCostByCompanyId(companyId: string) {
+    const { companies, travels } = await this.companyFetcherService.fetchData();
     const tree = this.transformToHierarchyTree(companies, travels, companyId);
     const output = this.addTravelCostToAllNode(tree);
     return output;
@@ -102,7 +84,9 @@ export class CompanyService {
           parent.cost = parent.independentCost;
           return;
         }
-        parent.childrenCost = this.calculateChildrenNodeTravelCost(parent.childrens);
+        parent.childrenCost = this.calculateChildrenNodeTravelCost(
+          parent.childrens,
+        );
         parent.cost = parent.independentCost + parent.childrenCost;
         treeTraversal(parent.childrens);
       });

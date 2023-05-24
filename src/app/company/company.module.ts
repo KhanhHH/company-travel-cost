@@ -1,6 +1,8 @@
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { CompanyService } from './company.service';
 import { Module } from '@nestjs/common';
+import { CompanyResolver } from './company.resolver';
+import { CompanyFetcherService } from './company-fetcher.service';
 
 @Module({
   imports: [
@@ -9,10 +11,8 @@ import { Module } from '@nestjs/common';
       timeout: 10000,
     }),
   ],
-  exports: [CompanyService, HttpService],
+  exports: [CompanyService, CompanyFetcherService],
   controllers: [],
-  providers: [CompanyService, 
-
-  ],
+  providers: [CompanyService, CompanyFetcherService, CompanyResolver],
 })
 export class CompanyModule {}
